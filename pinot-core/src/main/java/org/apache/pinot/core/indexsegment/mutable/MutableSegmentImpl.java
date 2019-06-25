@@ -45,7 +45,6 @@ import org.apache.pinot.core.realtime.impl.RealtimeSegmentStatsHistory;
 import org.apache.pinot.core.realtime.impl.dictionary.MutableDictionary;
 import org.apache.pinot.core.realtime.impl.dictionary.MutableDictionaryFactory;
 import org.apache.pinot.core.realtime.impl.invertedindex.RealtimeInvertedIndexReader;
-import org.apache.pinot.core.realtime.stream.StreamMessageMetadata;
 import org.apache.pinot.core.segment.creator.impl.V1Constants;
 import org.apache.pinot.core.segment.index.SegmentMetadataImpl;
 import org.apache.pinot.core.segment.index.data.source.ColumnDataSource;
@@ -165,9 +164,11 @@ public class MutableSegmentImpl implements MutableSegment {
           dictionaryColumnSize = dataType.size();
         }
         String allocationContext = buildAllocationContext(_segmentName, column, V1Constants.Dict.FILE_EXTENSION);
+        // NOTE: preserve 20% buffer for cardinality to reduce the chance of re-sizing the dictionary
+        int estimatedCardinality = (int) (_statsHistory.getEstimatedCardinality(column) * 1.2);
         MutableDictionary dictionary = MutableDictionaryFactory
             .getMutableDictionary(dataType, _offHeap, _memoryManager, dictionaryColumnSize,
-                Math.min(_statsHistory.getEstimatedCardinality(column), _capacity), allocationContext);
+                Math.min(estimatedCardinality, _capacity), allocationContext);
         _dictionaryMap.put(column, dictionary);
 
         // Even though the column is defined as 'no-dictionary' in the config, we did create dictionary for consuming segment.
