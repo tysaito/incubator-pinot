@@ -1,5 +1,5 @@
 databaseConfiguration:
-  url: jdbc:h2:./config/h2db
-  user: sa
-  password: sa
-  driver: org.h2.Driver
+  url: jdbc:mysql://localhost:3306/thirdeye
+  user: root
+  password: ""
+  driver: com.mysql.jdbc.Driver
