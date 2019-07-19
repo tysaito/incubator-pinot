@@ -24,11 +24,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.pinot.thirdeye.anomaly.alert.util.EmailScreenshotHelper;
-import org.apache.pinot.thirdeye.anomaly.events.EventType;
 import org.apache.pinot.thirdeye.anomalydetection.context.AnomalyFeedback;
 import org.apache.pinot.thirdeye.anomalydetection.context.AnomalyResult;
 import org.apache.pinot.thirdeye.datalayer.bao.DetectionConfigManager;
-import org.apache.pinot.thirdeye.datalayer.bao.EventManager;
 import org.apache.pinot.thirdeye.datalayer.dto.DetectionConfigDTO;
 import org.apache.pinot.thirdeye.datalayer.dto.EventDTO;
 import org.apache.pinot.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
@@ -42,7 +40,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,16 +48,16 @@ import org.slf4j.LoggerFactory;
 /**
  * This email formatter lists the anomalies by their functions or metric.
  */
-public class MultipleAnomaliesEmailContentFormatter extends BaseEmailContentFormatter{
-  private static final Logger LOG = LoggerFactory.getLogger(MultipleAnomaliesEmailContentFormatter.class);
+public class MetricAnomaliesEmailContentFormatter extends BaseEmailContentFormatter{
+  private static final Logger LOG = LoggerFactory.getLogger(MetricAnomaliesEmailContentFormatter.class);
 
   public static final String EMAIL_TEMPLATE = "emailTemplate";
 
-  public static final String DEFAULT_EMAIL_TEMPLATE = "holiday-anomaly-report.ftl";
+  public static final String DEFAULT_EMAIL_TEMPLATE = "metric-anomalies-template.ftl";
 
   private DetectionConfigManager configDAO = null;
 
-  public MultipleAnomaliesEmailContentFormatter(){
+  public MetricAnomaliesEmailContentFormatter(){
 
   }
 
@@ -74,6 +71,8 @@ public class MultipleAnomaliesEmailContentFormatter extends BaseEmailContentForm
   @Override
   protected void updateTemplateDataByAnomalyResults(Map<String, Object> templateData,
       Collection<AnomalyResult> anomalies, EmailContentFormatterContext context) {
+    enrichMetricInfo(templateData, anomalies);
+
     DateTime windowStart = DateTime.now();
     DateTime windowEnd = new DateTime(0);
 
@@ -130,8 +129,8 @@ public class MultipleAnomaliesEmailContentFormatter extends BaseEmailContentForm
 
       AnomalyReportEntity anomalyReport = new AnomalyReportEntity(String.valueOf(anomaly.getId()),
           getAnomalyURL(anomaly, emailContentFormatterConfiguration.getDashboardHost()),
-          ThirdEyeUtils.getRoundedValue(anomaly.getAvgBaselineVal()),
-          ThirdEyeUtils.getRoundedValue(anomaly.getAvgCurrentVal()),
+          anomaly.getAvgBaselineVal(),
+          anomaly.getAvgCurrentVal(),
           0d,
           getDimensionsList(anomaly.getDimensions()),
           getTimeDiffInHours(anomaly.getStartTime(), anomaly.getEndTime()), // duration

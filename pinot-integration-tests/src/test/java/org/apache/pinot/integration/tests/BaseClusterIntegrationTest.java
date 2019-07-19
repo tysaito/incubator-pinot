@@ -71,7 +71,6 @@ public abstract class BaseClusterIntegrationTest extends ClusterTest {
 
   protected final File _tempDir = new File(FileUtils.getTempDirectory(), getClass().getSimpleName());
   protected final File _avroDir = new File(_tempDir, "avroDir");
-  protected final File _preprocessingDir = new File(_tempDir, "preprocessingDir");
   protected final File _segmentDir = new File(_tempDir, "segmentDir");
   protected final File _tarDir = new File(_tempDir, "tarDir");
   protected List<KafkaServerStartable> _kafkaStarters;
@@ -184,7 +183,7 @@ public abstract class BaseClusterIntegrationTest extends ClusterTest {
   }
 
   @Nullable
-  protected  String getServerTenant() {
+  protected String getServerTenant() {
     return TagNameUtils.DEFAULT_TENANT_NAME;
   }
 
@@ -384,6 +383,19 @@ public abstract class BaseClusterIntegrationTest extends ClusterTest {
   protected void testQuery(@Nonnull String pqlQuery, @Nullable List<String> sqlQueries)
       throws Exception {
     ClusterIntegrationTestUtils
-        .testQuery(pqlQuery, _brokerBaseApiUrl, getPinotConnection(), sqlQueries, getH2Connection());
+        .testQuery(pqlQuery, "pql", _brokerBaseApiUrl, getPinotConnection(), sqlQueries, getH2Connection());
+  }
+
+  /**
+   * Run equivalent Pinot and H2 query and compare the results.
+   *
+   * @param sqlQuery Pinot query
+   * @param sqlQueries H2 query
+   * @throws Exception
+   */
+  protected void testSqlQuery(@Nonnull String sqlQuery, @Nullable List<String> sqlQueries)
+      throws Exception {
+    ClusterIntegrationTestUtils
+        .testQuery(sqlQuery, "sql", _brokerBaseApiUrl, getPinotConnection(), sqlQueries, getH2Connection());
   }
 }
